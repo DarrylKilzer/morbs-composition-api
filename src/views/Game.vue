@@ -4,7 +4,7 @@
       <div class="col-11">
         <!-- EncounterModal here -->
         <div
-          v-for="(row, rowIndex) in state.world"
+          v-for="(row, rowIndex) in AppState.world"
           class="map-row mx-auto"
           :key="rowIndex"
         >
@@ -21,150 +21,48 @@
 </template>
 
 <script>
-import { reactive } from "@vue/composition-api";
+// import { reactive } from "@vue/composition-api";
+import { AppState } from "../AppState";
 export default {
   name: "game",
   setup() {
-    const state = reactive({
-      player: {
-        x: 0,
-        y: 0
-      },
-      tileSize: 16,
-      chanceToStartAlive: 0.4,
-      deathLimit: 3,
-      birthLimit: 4,
-      numberOfSteps: 10,
-      worldWidth: 0,
-      worldHeight: 0,
-      world: [[]],
-      newMap: [[]],
-      treasureHiddenLimit: 5
-    });
-
-    //#region functions
-
-    function initialiseMap(map) {
-      for (let y = 0; y < state.worldHeight; y++) {
-        map[y] = [];
-        for (let x = 0; x < state.worldWidth; x++) {
-          map[y][x] = 0;
-        }
-      }
-      for (let y = 0; y < state.worldHeight; y++) {
-        for (let x = 0; x < state.worldWidth; x++) {
-          //Here we use our chanceToStartAlive variable
-          if (Math.random() < state.chanceToStartAlive)
-            //We're using numbers, not booleans, to decide if something is solid here. 0 = not solid
-            map[y][x] = 1;
-        }
-      }
-      return map;
-    }
-
-    function countAliveNeighbours(map, x, y) {
-      let count = 0;
-      for (let i = -1; i < 2; i++) {
-        for (let j = -1; j < 2; j++) {
-          const neighborY = i + y;
-          const neighborX = j + x;
-          // if (i == 0 && j == 0) {
-          // }
-          //If it's at the edges, consider it to be solid (you can try removing the count = count + 1)
-          if (
-            neighborX < 0 ||
-            neighborY < 0 ||
-            neighborX >= map[0].length ||
-            neighborY >= map.length
-          ) {
-            count++;
-          } else if (map[neighborY][neighborX] == 1) {
-            count++;
-          }
-        }
-      }
-      return count;
-    }
-
-    function cleanup(map) {
-      //Here's the new map we're going to copy our data into
-      const newmap = [[]];
-      for (let y = 0; y < map.length; y++) {
-        newmap[y] = [];
-        for (let x = 0; x < map[0].length; x++) {
-          //Count up the neighbours
-          const neighbours = countAliveNeighbours(map, x, y);
-          //If the tile is currently solid
-          if (map[y][x] > 0) {
-            //See if it should die
-            if (neighbours < state.deathLimit) {
-              newmap[y][x] = 0;
-            }
-            //Otherwise keep it solid
-            else {
-              newmap[y][x] = 1;
-            }
-          }
-          //If the tile is currently empty
-          else {
-            //See if it should become solid
-            if (neighbours > state.birthLimit) {
-              newmap[y][x] = 1;
-            } else {
-              newmap[y][x] = 0;
-            }
-          }
-        }
-      }
-      return newmap;
-    }
-
-    function generateMap() {
-      let map = [[]];
-      //randomly scatter solid blocks
-      initialiseMap(map);
-      for (let i = 0; i < state.numberOfSteps; i++) {
-        // make the map more uniform by clustering live blocks
-        map = cleanup(map);
-      }
-      return map;
-    }
+    // const state = reactive({});
 
     function move(keyCode) {
-      console.log(state.player.x, state.player.y);
+      console.log(AppState.player.x, AppState.player.y);
       let wall;
       switch (keyCode) {
         case "KeyW":
-          wall = state.world[state.player.y - 1][state.player.x];
+          wall = AppState.world[AppState.player.y - 1][AppState.player.x];
           if (wall) {
             return;
           }
-          state.player.y = state.player.y > 0 ? state.player.y - 1 : 0;
+          AppState.player.y = AppState.player.y > 0 ? AppState.player.y - 1 : 0;
           break;
         case "KeyS":
-          wall = state.world[state.player.y + 1][state.player.x];
+          wall = AppState.world[AppState.player.y + 1][AppState.player.x];
           if (wall) {
             return;
           }
-          state.player.y =
-            state.player.y < state.worldHeight
-              ? state.player.y + 1
-              : state.worldHeight;
+          AppState.player.y =
+            AppState.player.y < AppState.worldHeight
+              ? AppState.player.y + 1
+              : AppState.worldHeight;
           break;
         case "KeyA":
-          wall = state.world[state.player.y][state.player.x - 1];
+          wall = AppState.world[AppState.player.y][AppState.player.x - 1];
           if (wall) {
             return;
           }
-          state.player.x = state.player.x > 0 ? state.player.x - 1 : 0;
+          AppState.player.x = AppState.player.x > 0 ? AppState.player.x - 1 : 0;
           break;
         case "KeyD":
-          wall = state.world[state.player.y][state.player.x + 1];
+          wall = AppState.world[AppState.player.y][AppState.player.x + 1];
           if (wall) {
             return;
           }
-          state.player.x =
-            state.player.x < state.worldWidth ? state.player.x + 1 : 0;
+          AppState.player.x =
+            AppState.player.x < AppState.worldWidth ? AppState.player.x + 1 : 0;
           break;
       }
     }
@@ -178,53 +76,21 @@ export default {
       }
     }
 
-    function placeTreasure() {
-      //How hidden does a spot need to be for treasure?
-      //I find 5 or 6 is good. 6 for very rare treasure.
-      for (let y = 0; y < state.worldHeight; y++) {
-        for (let x = 0; x < state.worldWidth; x++) {
-          if (!state.world[y][x]) {
-            const nbs = countAliveNeighbours(state.world, x, y);
-            if (nbs >= state.treasureHiddenLimit) {
-              state.world[y][x] = 2;
-            }
-          }
-        }
-      }
-    }
-
     function manageTurn(e) {
-      if (state.enemyGorder.name) {
+      if (AppState.enemyGorder.name) {
         return;
       }
       move(e.code);
       checkForEncounter();
     }
-    //#endregion
-
-    state.worldWidth = Math.floor(window.outerWidth / state.tileSize);
-    state.worldHeight = Math.floor(window.outerHeight / state.tileSize) - 2;
-    state.world = generateMap();
-    placeTreasure();
-    const xAxis = Math.floor(state.worldWidth / 2);
-    const yAxis = Math.floor(state.worldHeight / 2);
-    for (let x = xAxis; x < state.world[yAxis].length; x++) {
-      const wall = state.world[yAxis][x];
-      if (!wall) {
-        state.player.y = yAxis;
-        state.player.x = x;
-        x = state.world[yAxis].length;
-      }
-    }
 
     document.addEventListener("keypress", manageTurn);
 
     return {
-      state,
-      generateMap,
+      // state,
       setClasses(tile, x, y) {
         let classes = "";
-        if (state.player.x == x && state.player.y == y) {
+        if (AppState.player.x == x && AppState.player.y == y) {
           classes += "player";
           return classes;
         }
@@ -236,8 +102,8 @@ export default {
         } else {
           classes += "floor";
         }
-        const xAbs = Math.abs(state.player.x - x);
-        const yAbs = Math.abs(state.player.y - y);
+        const xAbs = Math.abs(AppState.player.x - x);
+        const yAbs = Math.abs(AppState.player.y - y);
         const tooFar = xAbs + yAbs > 4;
         classes += tooFar ? " fog" : "";
         return classes;
