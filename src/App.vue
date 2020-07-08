@@ -1,5 +1,5 @@
 <template>
-  <div id="app">
+  <div id="app" class="d-flex">
     <!-- <navbar></navbar> -->
     <router-view />
   </div>
@@ -17,7 +17,7 @@ export default {
 @import "bootstrap";
 @import "./assets/_overrides.scss";
 @import "~@sweetalert2/theme-bootstrap-4/bootstrap-4.scss";
-#app{
+#app {
   min-height: 100vh;
 }
 </style>
